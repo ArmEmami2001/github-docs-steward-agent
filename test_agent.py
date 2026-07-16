@@ -2,7 +2,7 @@ import json
 import os
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import agent
 
@@ -53,7 +53,24 @@ class StewardTests(unittest.TestCase):
         self.assertEqual(call.call_args_list[1].args[2], "log_event")
         self.assertIn("MIT", call.call_args_list[1].args[3]["description"])
 
+    @patch("agent.time.sleep")
+    @patch("agent.httpx.post")
+    def test_mcp_call_retries_transient_classifier_response(self, post, _sleep):
+        rejected = Mock()
+        rejected.raise_for_status.return_value = None
+        rejected.json.return_value = {
+            "result": {"isError": True, "content": [{"text": "E_CLASSIFIER_RESPONSE"}]}
+        }
+        accepted = Mock()
+        accepted.raise_for_status.return_value = None
+        accepted.json.return_value = {"result": {"content": [{"text": "ok"}]}}
+        post.side_effect = [rejected, accepted]
+
+        result = agent.mcp_call("https://example.test/mcp/", "credential", "log_event", {"description": "work"})
+
+        self.assertEqual(post.call_count, 2)
+        self.assertFalse(result.get("isError", False))
+
 
 if __name__ == "__main__":
     unittest.main()
-

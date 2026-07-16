@@ -116,6 +116,9 @@ def mcp_call(url: str, credential: str, name: str, arguments: dict[str, Any]) ->
                 if "E_HOURLY_EVENT_LIMIT" in text or "E_DAILY_EVENT_LIMIT" in text:
                     print(f"Noosphere quota already reached: {text}")
                     return result
+                if name == "log_event" and "E_CLASSIFIER_RESPONSE" in text and attempt < 2:
+                    time.sleep(2 ** attempt)
+                    continue
                 raise RuntimeError(f"Noosphere tool {name} failed: {text or result}")
             return result
         except (httpx.HTTPError, ValueError) as exc:
@@ -132,7 +135,8 @@ def main() -> int:
     url = os.environ.get("NOOSPHERE_MCP_URL", DEFAULT_MCP_URL)
     prompts = json.loads((ROOT / "prompts.json").read_text(encoding="utf-8"))
     facts = collect_facts(repository, github_token)
-    description = prompts[prompt_index(len(prompts))].format(**facts)
+    observation = prompts[prompt_index(len(prompts))].format(**facts)
+    description = f"Used GitHub API tools to complete a concrete documentation audit. {observation}"
 
     if os.environ.get("DRY_RUN") == "1":
         print(description)
@@ -154,4 +158,3 @@ if __name__ == "__main__":
     except Exception as exc:
         print(f"agent failed: {exc}", file=sys.stderr)
         raise SystemExit(1)
-
