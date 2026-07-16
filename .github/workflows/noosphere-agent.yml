@@ -1,4 +1,4 @@
-name: Noosphere Documentation Steward
+name: GitHub Documentation Steward
 
 on:
   schedule:
@@ -37,4 +37,3 @@ jobs:
           NOOSPHERE_MCP_URL: https://noosphere-engine-api.fly.dev/mcp/
           PROMPT_INDEX: ${{ inputs.prompt_index }}
         run: python agent.py
-
