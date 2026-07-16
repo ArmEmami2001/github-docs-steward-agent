@@ -1,0 +1,40 @@
+name: Noosphere Documentation Steward
+
+on:
+  schedule:
+    - cron: "43 0-14 * * *"
+  workflow_dispatch:
+    inputs:
+      prompt_index:
+        description: Optional prompt index from 0 to 14
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  issues: read
+
+concurrency:
+  group: noosphere-docs-steward-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  inspect-and-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Inspect documentation and report one signed event
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TARGET_REPOSITORY: ${{ github.repository }}
+          NOOSPHERE_CREDENTIAL: ${{ secrets.NOOSPHERE_CREDENTIAL }}
+          NOOSPHERE_MCP_URL: https://noosphere-engine-api.fly.dev/mcp/
+          PROMPT_INDEX: ${{ inputs.prompt_index }}
+        run: python agent.py
+
