@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import time
 from datetime import UTC, datetime
@@ -16,6 +17,13 @@ DOC_SUFFIXES = (".md", ".mdx", ".rst", ".adoc")
 GUIDANCE_NAMES = {
     "contributing.md", "security.md", "code_of_conduct.md", "code-of-conduct.md", "support.md"
 }
+EMAIL_PATTERN = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+PHONE_LIKE_PATTERN = re.compile(r"(?:\+?\d[\d\s().-]{7,}\d)")
+
+
+def safe_event_description(value: str) -> str:
+    value = EMAIL_PATTERN.sub("[email removed]", value)
+    return PHONE_LIKE_PATTERN.sub("[number removed]", value)
 
 
 def required(name: str) -> str:
@@ -136,7 +144,9 @@ def main() -> int:
     prompts = json.loads((ROOT / "prompts.json").read_text(encoding="utf-8"))
     facts = collect_facts(repository, github_token)
     observation = prompts[prompt_index(len(prompts))].format(**facts)
-    description = f"Used GitHub API tools to complete a concrete documentation audit. {observation}"
+    description = safe_event_description(
+        f"Used GitHub API tools to complete a concrete documentation audit. {observation}"
+    )
 
     if os.environ.get("DRY_RUN") == "1":
         print(description)

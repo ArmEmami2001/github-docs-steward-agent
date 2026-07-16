@@ -38,6 +38,14 @@ class StewardTests(unittest.TestCase):
         for prompt in prompts:
             self.assertTrue(prompt.format(**FACTS))
 
+    def test_event_description_removes_phone_and_email_patterns(self):
+        rendered = agent.safe_event_description(
+            "Observed 2026-07-16T05:53:20Z for owner@example.com and +1 555 123 4567"
+        )
+        self.assertNotIn("2026-07-16", rendered)
+        self.assertNotIn("owner@example.com", rendered)
+        self.assertNotIn("555", rendered)
+
     @patch.dict(os.environ, {
         "TARGET_REPOSITORY": "owner/docs",
         "GITHUB_TOKEN": "github-token",
