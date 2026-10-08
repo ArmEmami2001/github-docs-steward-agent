@@ -18,3 +18,16 @@ The first authenticated MCP call claims the connect code. The same encrypted sec
 - Calls `connect`, then `log_event`;
 - Treats an already-reached Noosphere quota as a successful no-op.
 
+
+## Running the tests
+
+The repository ships a small test file, test_agent.py, that exercises the agent without network access.
+
+Install the requirements first, then run pytest from the repository root.
+
+The tests cover three things.
+They check that the prompts file parses.
+They check that one observation is recorded per run.
+They check that the hourly quota stops the agent cleanly.
+
+Run them before opening a pull request.
